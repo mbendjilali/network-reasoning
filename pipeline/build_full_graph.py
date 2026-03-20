@@ -131,12 +131,12 @@ def build_full_graph(
 
 def main():
     parser = argparse.ArgumentParser(description="Build full network graphs and geometry.")
-    parser.add_argument("--input", default="data/graph")
+    parser.add_argument("--input", default="data/network")
     parser.add_argument("--laz_dir", default="dales_2")
     parser.add_argument("--graph_dir", default="data/graph")
     parser.add_argument("--geom_dir", default="data/geometry")
     parser.add_argument("--pole_tol", type=float, default=0.5)
-    parser.add_argument("--max_vehicles", type=int, default=1000)
+    parser.add_argument("--max_vehicles", type=int, default=1e9)
     parser.add_argument("--vehicle_spacing", type=float, default=0.5)
     parser.add_argument("--veh_group_tol", type=float, default=3.0)
     parser.add_argument("--building_group_tol", type=float, default=8.0)

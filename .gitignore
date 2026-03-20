@@ -2,3 +2,7 @@ data/network/*
 data/geometry/*
 data/graph/*
 dales_2
+pipeline/__pycache__/
+pipeline/lib/__pycache__/
+backend/__pycache__/
+backend/core/__pycache__/

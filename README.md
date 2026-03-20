@@ -116,14 +116,6 @@ python -m backend.main
 
 Open `http://localhost:8000`, click **Upload**, select a LAZ/LAS file (and optionally a network JSON), and click **Process**. The tile is processed on-the-fly and immediately available in the viewer.
 
-### Running the Viewer
-
-```bash
-python -m backend.main
-```
-
-Navigate to `http://localhost:8000`. Select a tile from the dropdown to load it.
-
 ## Graph JSON Schema
 
 Each `graph_<tile_id>.json` contains only topological and semantic data:
