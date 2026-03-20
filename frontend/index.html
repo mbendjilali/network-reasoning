@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Network Reasoning Annotation Tool</title>
+    <link rel="stylesheet" href="css/style.css?v=13">
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+</head>
+<body>
+    <div id="ui-container">
+        <div id="top-bar">
+            <select id="tile-select">
+                <option value="">Select a tile...</option>
+            </select>
+            <input type="hidden" id="tile-version-id" value="" />
+            <button id="save-btn" disabled>Save</button>
+            <button id="upload-btn">Upload</button>
+            <span id="status-msg"></span>
+        </div>
+
+        <div id="shortcuts-panel">
+            <h4>Shortcuts</h4>
+            <table class="shortcut-table">
+                <tr><td class="key">Click</td><td>Select object</td></tr>
+                <tr><td class="key">Shift + Click</td><td>Multi-select</td></tr>
+                <tr><td class="key">Shift + Drag</td><td>Lasso selection</td></tr>
+                <tr><td class="key">Double Click</td><td>Clear selection / Reset view</td></tr>
+                <tr><td class="key">Left Drag</td><td>Rotate camera</td></tr>
+                <tr><td class="key">Right Drag</td><td>Pan camera</td></tr>
+                <tr><td class="key">Scroll</td><td>Zoom</td></tr>
+                <tr><td class="key">W</td><td>Wedge (merge clusters)</td></tr>
+                <tr><td class="key">X</td><td>Split cluster</td></tr>
+                <tr><td class="key">C</td><td>Delete cluster</td></tr>
+                <tr><td class="key">G</td><td>Cycle relation (adjacent / near)</td></tr>
+                <tr><td class="key">Space</td><td>Cycle color scheme</td></tr>
+                <tr><td class="key">Shift + Space</td><td>Randomize colors</td></tr>
+                <tr><td class="key">A</td><td>Toggle conductors</td></tr>
+                <tr><td class="key">Z</td><td>Toggle poles</td></tr>
+                <tr><td class="key">E</td><td>Toggle buildings</td></tr>
+                <tr><td class="key">R</td><td>Toggle vehicles</td></tr>
+                <tr><td class="key">T</td><td>Toggle trees</td></tr>
+                <tr><td class="key">S</td><td>Save</td></tr>
+            </table>
+        </div>
+
+        <button id="openListBtn">List Objects</button>
+
+        <div id="sidebar" style="display: none;">
+            <div class="modal-header">
+                <h3 style="margin: 0;">Inspector</h3>
+                <button id="closeSidebarBtn">Close</button>
+            </div>
+            <div class="tab-header">
+                <button class="tab-btn active" data-tab="extensions">Extensions</button>
+                <button class="tab-btn" data-tab="poles">Poles</button>
+                <button class="tab-btn" data-tab="buildings">Buildings</button>
+                <button class="tab-btn" data-tab="vehicles">Vehicles</button>
+                <button class="tab-btn" data-tab="trees">Trees</button>
+                <button class="tab-btn" data-tab="macro">Macro</button>
+            </div>
+
+            <div id="tab-extensions" class="tab-content active">
+                <ul id="extensionList" class="obj-list"></ul>
+            </div>
+            <div id="tab-poles" class="tab-content">
+                <ul id="poleList" class="obj-list"></ul>
+            </div>
+            <div id="tab-buildings" class="tab-content">
+                <ul id="buildingList" class="obj-list"></ul>
+            </div>
+            <div id="tab-vehicles" class="tab-content">
+                <ul id="vehicleList" class="obj-list"></ul>
+            </div>
+            <div id="tab-trees" class="tab-content">
+                <ul id="treeList" class="obj-list"></ul>
+            </div>
+            <div id="tab-macro" class="tab-content">
+                <div class="macro-tab-header">
+                    <button class="macro-tab-btn active" data-macro-tab="connector">Spans</button>
+                    <button class="macro-tab-btn" data-macro-tab="grid">Electrical grids</button>
+                    <button class="macro-tab-btn" data-macro-tab="building-clusters">Building clusters</button>
+                    <button class="macro-tab-btn" data-macro-tab="vehicle-clusters">Vehicle clusters</button>
+                    <button class="macro-tab-btn" data-macro-tab="tree-clusters">Tree clusters</button>
+                </div>
+                <div id="macro-tab-connector" class="macro-tab-content active">
+                    <ul id="macroSpanList" class="obj-list"></ul>
+                </div>
+                <div id="macro-tab-grid" class="macro-tab-content">
+                    <ul id="macroGridList" class="obj-list"></ul>
+                </div>
+                <div id="macro-tab-building-clusters" class="macro-tab-content">
+                    <ul id="buildingClusterList" class="obj-list"></ul>
+                </div>
+                <div id="macro-tab-vehicle-clusters" class="macro-tab-content">
+                    <ul id="vehicleClusterList" class="obj-list"></ul>
+                </div>
+                <div id="macro-tab-tree-clusters" class="macro-tab-content">
+                    <ul id="treeClusterList" class="obj-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Version selection modal -->
+    <div id="version-modal" class="version-modal" style="display:none;">
+        <div class="version-modal-content">
+            <h3>Select version for <span id="version-modal-base"></span></h3>
+            <ul id="version-list" class="obj-list"></ul>
+            <div class="version-modal-actions">
+                <button id="version-cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <!-- Upload modal -->
+    <div id="upload-modal" class="version-modal" style="display:none;">
+        <div class="version-modal-content">
+            <h3>Upload LAZ / LAS</h3>
+            <label>LAZ/LAS file (required):<br>
+                <input type="file" id="upload-laz-input" accept=".laz,.las">
+            </label>
+            <br><br>
+            <label>Network JSON (optional, for electrical grid):<br>
+                <input type="file" id="upload-net-input" accept=".json">
+            </label>
+            <br><br>
+            <div class="version-modal-actions">
+                <button id="upload-process-btn">Process</button>
+                <button id="upload-cancel-btn">Cancel</button>
+            </div>
+            <p id="upload-status" style="color:#aaa;"></p>
+        </div>
+    </div>
+    <div id="action-bar" style="display: none;">
+        <button id="wedge-btn">Wedge (W)</button>
+        <button id="split-btn">Split (X)</button>
+        <button id="delete-btn">Delete (C)</button>
+    </div>
+    <div id="selectedInfo" style="display: none;"></div>
+
+    <div id="bottom-right-bar">
+        <button id="color-scheme-toggle">Semantic colors</button>
+        <div id="visibility-bar">
+            <button class="vis-toggle" data-class="conductors">Conductors (A)</button>
+            <button class="vis-toggle" data-class="poles">Poles (Z)</button>
+            <button class="vis-toggle" data-class="buildings">Buildings (E)</button>
+            <button class="vis-toggle" data-class="vehicles">Vehicles (R)</button>
+            <button class="vis-toggle" data-class="trees">Trees (T)</button>
+        </div>
+    </div>
+    <div id="lasso-rect" style="display:none;"></div>
+    <script type="module" src="js/main.js?v=13"></script>
+</body>
+</html>
