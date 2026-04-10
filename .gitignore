@@ -7,4 +7,5 @@ backend/__pycache__/*
 backend/core/__pycache__/*
 scripts/dev/__pycache__/*
 edge_counts.csv
-DALES 2 A Renovated Aerial LiDAR Benchmark for 3D Scene Understanding CVPRW26/
+DALES-2-DATASET/
+huggingface/

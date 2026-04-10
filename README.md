@@ -1,22 +1,45 @@
-# DALES 2 — scene graph tool
+# DALES 2 — Scene Graph Tool
 
-**Network Reasoning** is the scene-graph construction and editing stack for **DALES 2: A Renovated Aerial LiDAR Benchmark for 3D Scene Understanding**, accepted at the **USM3D** workshop at **CVPR 2026**. Camera-ready LaTeX sources: [`DALES 2 A Renovated Aerial LiDAR Benchmark for 3D Scene Understanding CVPRW26/`](DALES%202%20A%20Renovated%20Aerial%20LiDAR%20Benchmark%20for%203D%20Scene%20Understanding%20CVPRW26/).
+**Network Reasoning** is the scene-graph construction and editing stack for **DALES 2: A Renovated Aerial LiDAR Benchmark for 3D Scene Understanding**, accepted at the **USM3D** workshop at **CVPR 2026**.
 
 It processes classified LiDAR (LAZ/LAS) with semantic and instance labels into JSON graphs (topology and relations) and provides a **FastAPI + Three.js** viewer for inspection, macro-instance grouping, and relation editing.
 
-### Citation
+## Dataset (Hugging Face)
 
-If you use this code or the DALES 2 benchmark, please cite the workshop paper (update `pages` when proceedings are available):
+The **DALES 2** point-cloud release is hosted on Hugging Face at **[mbendjilali/DALES-2](https://huggingface.co/datasets/mbendjilali/DALES-2)** (LAZ/LAS tiles with semantic and instance labels). Use it for training and evaluation; use this repository to build or edit **scene graphs** and derived geometry JSON from those tiles (and optional network JSON).
 
-```bibtex
-@inproceedings{bendjilali2026dales2,
-  title     = {{DALES} 2: A Renovated Aerial {LiDAR} Benchmark for 3D Scene Understanding},
-  author    = {Bendjilali, Moussa and Peyran, Claire and Velumani, Kaaviya and Mauri, Antoine and Luminari, Nicola and Alliez, Pierre},
-  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops},
-  year      = {2026},
-  note      = {USM3D workshop},
-}
+The Hugging Face **dataset card** (README for the Hub) is maintained in this repo as [`huggingface/DALES-2/README.md`](huggingface/DALES-2/README.md) so you can copy or sync it with the Hub when you update the release.
+
+## Installation
+
+**Requirements:** Python 3.8+, a modern browser with WebGL support and **network access** on first load (Three.js is loaded from [unpkg](https://unpkg.com/) in `frontend/index.html`). For fully offline use, vendor the Three.js build into `frontend/` and point the import map to local files.
+
+```bash
+pip install -r requirements.txt
 ```
+
+Dependencies: `fastapi`, `uvicorn`, `numpy`, `scipy`, `laspy`, `scikit-image`, `shapely`, `networkx`, `pydantic`, `tqdm`, `python-multipart`.
+
+**Deployment:** `backend/main.py` enables CORS for `http://localhost` and `http://localhost:8000` only. To serve the API from another origin, extend `origins` before production use.
+
+## Data Preparation
+
+### Input: LAZ/LAS Point Clouds
+
+Each tile is a LAZ (or LAS) file with per-point fields:
+
+- **classification** — semantic class ID (see taxonomy above)
+- **instance** (or equivalent) — per-object instance ID, **unique across all semantic classes** in the tile (dataset convention)
+
+Dev helpers: `scripts/dev/check_laz_instance_uniqueness.py` (see project tree). To normalize instance ids, `scripts/dev/remap_laz_instance_ids.py` sets instance **0** for comma-separated **stuff** semantic classes (`--stuff-classes`, default `0,1,4`) and assigns contiguous **1…N** for all other classes.
+
+### Input: Network JSON (Optional)
+
+If an electrical network description is available, provide a JSON file per tile with node/link definitions (poles, conductors, connectivity). This enables the pipeline to compute extensions, bifurcations, crosses, connector spans, and electrical grids.
+
+Without a network file, the pipeline still processes buildings, vehicles, and trees.
+
+
 
 ## Project Structure
 
@@ -62,6 +85,9 @@ data/                     Runtime data (not tracked in git)
   network/                Raw network JSON files (poles, conductors)
   graph/                  Generated graph JSON files
   geometry/               Generated geometry JSON files
+
+huggingface/              Source copy of the Hugging Face dataset card
+  DALES-2/README.md       Upload or sync to https://huggingface.co/datasets/mbendjilali/DALES-2
 ```
 
 ## Semantic Taxonomy
@@ -86,34 +112,6 @@ The point cloud classification follows a 15-class taxonomy:
 | 13 | Complex      | Building          |
 | 14 | Annex        | Building          |
 
-## Installation
-
-**Requirements:** Python 3.8+, a modern browser with WebGL support and **network access** on first load (Three.js is loaded from [unpkg](https://unpkg.com/) in `frontend/index.html`). For fully offline use, vendor the Three.js build into `frontend/` and point the import map to local files.
-
-```bash
-pip install -r requirements.txt
-```
-
-Dependencies: `fastapi`, `uvicorn`, `numpy`, `scipy`, `laspy`, `scikit-image`, `shapely`, `networkx`, `pydantic`, `tqdm`, `python-multipart`.
-
-**Deployment:** `backend/main.py` enables CORS for `http://localhost` and `http://localhost:8000` only. To serve the API from another origin, extend `origins` before production use.
-
-## Data Preparation
-
-### Input: LAZ/LAS Point Clouds
-
-Each tile is a LAZ (or LAS) file with per-point fields:
-
-- **classification** — semantic class ID (see taxonomy above)
-- **instance** (or equivalent) — per-object instance ID, **unique across all semantic classes** in the tile (dataset convention)
-
-Dev helpers: `scripts/dev/check_laz_instance_uniqueness.py` (see project tree). To normalize instance ids, `scripts/dev/remap_laz_instance_ids.py` sets instance **0** for comma-separated **stuff** semantic classes (`--stuff-classes`, default `0,1,4`) and assigns contiguous **1…N** for all other classes.
-
-### Input: Network JSON (Optional)
-
-If an electrical network description is available, provide a JSON file per tile with node/link definitions (poles, conductors, connectivity). This enables the pipeline to compute extensions, bifurcations, crosses, connector spans, and electrical grids.
-
-Without a network file, the pipeline still processes buildings, vehicles, and trees.
 
 ## Usage
 
@@ -255,7 +253,7 @@ Each `geom_<tile_id>.json` contains visualization data only:
 | Click               | Select object                       |
 | Shift + Click       | Multi-select (add to selection)     |
 | Shift + Drag        | Lasso selection                     |
-| Double click          | Clear selection / Reset view        |
+| Double click        | Clear selection                     |
 | Left Drag           | Rotate camera                       |
 | Right Drag          | Pan camera                          |
 | Scroll              | Zoom                                |
@@ -294,6 +292,21 @@ Each `geom_<tile_id>.json` contains visualization data only:
 | POST   | `/api/edit/group`                 | Wedge / split / delete groups        |
 | PATCH  | `/api/group_relation/{tile_id}`   | Update group relations               |
 | POST   | `/api/load_laz`                   | Upload and process a LAZ/LAS file    |
+
+
+### Citation
+
+If you use this code, the **Hugging Face** release ([mbendjilali/DALES-2](https://huggingface.co/datasets/mbendjilali/DALES-2)), or the DALES 2 benchmark in publications, please cite the workshop paper (update `pages` when proceedings are available):
+
+```bibtex
+@inproceedings{bendjilali2026dales2,
+  title     = {DALES 2: A Renovated Aerial LiDAR Benchmark for 3D Scene Understanding},
+  author    = {Bendjilali, Moussa and Peyran, Claire and Velumani, Kaaviya and Mauri, Antoine and Luminari, Nicola and Alliez, Pierre},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops},
+  year      = {2026},
+  note      = {USM3D workshop},
+}
+```
 
 ## License
 
